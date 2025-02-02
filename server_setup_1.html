@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Setup - Part 1</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/dark.css">
+</head>
+<body>
+    <h1>Server Setup - Part 1</h1>
+    <h2>Basic Installations</h2>
+    
+    <h3>1. Update System Packages</h3>
+    <pre><code>sudo apt-get update && sudo apt-get upgrade -y</code></pre>
+    
+    <h3>2. Install Node.js and npm</h3>
+    <pre><code>curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt-get install -y nodejs</code></pre>
+    
+    <h3>3. Install Docker</h3>
+    <pre><code>sudo apt-get install -y docker.io</code></pre>
+    
+    <h3>4. Install PM2</h3>
+    <pre><code>sudo npm install -g pm2</code></pre>
+    
+    <h3>5. Install Git</h3>
+    <pre><code>sudo apt-get install -y git</code></pre>
+    
+    <h2>MongoDB Docker Installation</h2>
+    
+    <h3>6. Run MongoDB in Docker</h3>
+    <pre><code>sudo docker run -d --network=host --restart=unless-stopped \
+        --name=taleem-db \
+        -e MONGO_INITDB_ROOT_USERNAME=admin \
+        -e MONGO_INITDB_ROOT_PASSWORD=bils32611 \
+        -v /var/lib/mongo_data:/data/db \
+        mongo:latest</code></pre>
+    
+    <h3>7. Verify MongoDB is Running</h3>
+    <pre><code>sudo docker ps | grep taleem-db</code></pre>
+    
+    <h2>MongoDB Users and Connection Strings</h2>
+    
+    <h3>8. Enter MongoDB Shell (Without Auth)</h3>
+    <pre><code>sudo docker exec -it taleem-db mongosh</code></pre>
+    
+    <h3>9. Authenticate Inside MongoDB Shell</h3>
+    <pre><code>use admin;
+db.auth("admin", "bils32611");</code></pre>
+    
+    <h3>10. Create dbOwner User in localDb</h3>
+    <pre><code>use localDb;
+db.createUser({
+    user: "bils32611",
+    pwd: "abc123Xyz",
+    roles: [{ role: "dbOwner", db: "localDb" }]
+});</code></pre>
+    
+    <h3>11. Connection Strings</h3>
+    <p><strong>Admin Connection:</strong></p>
+    <pre><code>mongodb://admin:bils32611@165.232.188.213:27017/admin?authSource=admin</code></pre>
+    
+    <p><strong>dbOwner Connection:</strong></p>
+    <pre><code>
+        mongodb://bils32611:abc123Xyz@165.232.188.213:27017/localDb
+    </code></pre>
+</body>
+</html>

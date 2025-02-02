@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Deployment Documentation</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/dark.min.css">
+</head>
+<body>
+    <h1>Server Deployment Documentation</h1>
+    
+    <h2>1. General Server Setup</h2>
+    <ul>
+        <li><strong>Operating System:</strong> Ubuntu</li>
+        <li><strong>Access:</strong> Running as root</li>
+        <li><strong>SSH Authentication:</strong> Enabled (SSH keys in place)</li>
+        <li><strong>Installed Software:</strong> Nginx, Docker, Node.js, PM2, npm</li>
+        <li><strong>Process Management:</strong> PM2 for managing the Node.js API</li>
+        <li><strong>Firewall:</strong> No rules set yet (to be configured later)</li>
+    </ul>
+    
+    <h2>2. MongoDB Docker Setup</h2>
+    <ul>
+        <li><strong>MongoDB Deployment:</strong> Running in a Docker container</li>
+        <li><strong>MongoDB Public Access:</strong> Exposed on <code>64.227.161.184:27017</code> (for Compass access)</li>
+        <li><strong>Database Connection String:</strong> <code>mongodb://bilaltariq:abc123Xyz@64.227.161.184:27017/localDb?authSource=localDb</code></li>
+        <li><strong>MongoDB User:</strong> <code>bilaltariq</code> (Read-only on <code>localDb</code>)</li>
+        <li><strong>Authentication:</strong> No authentication (`--auth`) enabled yet</li>
+        <li><strong>Storage:</strong> Unclear whether using volume or container-stored data</li>
+    </ul>
+    
+    <h2>MongoDB Run Command</h2>
+    <pre>
+        docker run -d --network=host --restart=unless-stopped \
+        --name=taleem-db \
+        -e MONGO_INITDB_ROOT_USERNAME=admin \
+        -e MONGO_INITDB_ROOT_PASSWORD=password \
+        -v mongo_data:/data/db \
+        -p 27017:27017 \
+        mongo:latest
+      
+    </pre>
+    <h2>When using host network the port:27017 is not required</h2>
+    <pre>
+     sudo   docker run -d --network=host --restart=unless-stopped \
+    --name=taleem-db \
+    -e MONGO_INITDB_ROOT_USERNAME=admin \
+    -e MONGO_INITDB_ROOT_PASSWORD=bils32611 \
+    -v mongo_data:/data/db \
+    mongo:latest
+
+    </pre>
+    
+    <h2>3. Svelte-Node UI App</h2>
+    <ul>
+        <li><strong>Deployment:</strong> Running in a Docker container</li>
+        <li><strong>Exposed on:</strong> Port <code>3000</code></li>
+        <li><strong>Nginx Routing:</strong> HTTPS requests to <code>https://taleem.help</code> are directed to port <code>3000</code></li>
+    </ul>
+    
+    <h2>UI App Run Command</h2>
+    <pre>
+    sudo docker run -d --network=host --restart=unless-stopped \ 
+        --name taleem-ui \ 
+        -e VITE_SOUND_BASE_URL=https://taleem-media.blr1.cdn.digitaloceanspaces.com/sound/ \ 
+        -e VITE_IMAGES_BASE_URL=https://taleem-media.blr1.cdn.digitaloceanspaces.com/ \ 
+        -e VITE_DEFAULT_AUDIO=/music.opus \ 
+        taleemhelp/ui:0.9.11
+    </pre>
+    
+    <h2>4. Node.js API</h2>
+    <ul>
+        <li><strong>Deployment:</strong> Running with PM2 (not Docker)</li>
+        <li><strong>Exposed on:</strong> Port <code>5000</code></li>
+        <li><strong>Nginx Routing:</strong> HTTPS requests to <code>https://taleem.help/api</code> are directed to port <code>5000</code></li>
+        <li><strong>MongoDB Connection:</strong> Uses <code>MONGO_URI</code> from <code>.env</code></li>
+    </ul>
+    
+    <h2>API CORS Configuration</h2>
+    <pre>
+    const allowedOrigins = ['http://localhost:3000', 'https://taleem.help'];
+    const corsOptions = {
+      origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      },
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
+      exposedHeaders: ['Content-Range', 'X-Content-Range'],
+      maxAge: 600
+    };
+    app.use(cors(corsOptions));
+    app.options('*', cors(corsOptions));
+    </pre>
+    
+    <h2>5. Nginx Configuration</h2>
+    <pre>
+   ...
+    </pre>
+    
+    <h2>Unknowns & Next Steps</h2>
+    <ul>
+        <li>Confirm whether MongoDB is using a volume for data persistence</li>
+        <li>Decide when to disable MongoDB's public exposure and enforce authentication</li>
+        <li>Consider using a firewall (UFW) to restrict MongoDB access</li>
+        <li>Future migration plan for running Nginx inside Docker</li>
+        <li>Establish a backup strategy for MongoDB</li>
+    </ul>
+</body>
+</html>
